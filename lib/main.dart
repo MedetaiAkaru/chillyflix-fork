@@ -1,12 +1,21 @@
-import 'package:chillyflix/HomeTab.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import 'Fanart.dart';
-import 'MoviesTab.dart';
-import 'ShowsTab.dart';
-import 'Trakt.dart';
+import 'package:chillyflix/Services/FanartService.dart';
+import 'package:chillyflix/Pages/HomePage.dart';
+import 'package:chillyflix/Services/TraktService.dart';
+
+extension Precision on double {
+      double toPrecision(int fractionDigits) {
+      double mod = pow(10, fractionDigits.toDouble());
+      return ((this * mod).round().toDouble() / mod);
+    }
+}
+
 
 void main() {
   return runApp(MyApp()); 
@@ -18,8 +27,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<Trakt>(create: (_) => Trakt()),
-        Provider<Fanart>(create: (_) => Fanart()),
+        Provider<TraktService>(create: (_) => TraktService()),
+        Provider<FanartService>(create: (_) => FanartService()),
       ],
       child: Shortcuts(
         // needed for AndroidTV to be able to select
@@ -27,73 +36,13 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           title: 'ChillyFlix',
           theme: ThemeData(
+            fontFamily: GoogleFonts.openSans().fontFamily,
             primarySwatch: Colors.blueGrey,
             backgroundColor: Color.fromARGB(255, 35, 40, 50)
           ),
-          home: MyHomePage(title: 'ChillyFlix'),
+          home: HomePage(title: 'ChillyFlix'),
         ),
       ),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-
-  final String title;
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-        length: 3,
-        child: Scaffold(
-          backgroundColor: Color.fromARGB(255, 35, 40, 50),
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Row(
-              children: <Widget>[
-                Text(widget.title),
-                SizedBox(width: 50),
-                TabBar(
-                  isScrollable: true,
-                  indicatorColor: Color.fromARGB(255, 255, 60, 70),
-                  tabs: <Widget>[
-                    Tab(text: 'Home'),
-                    Tab(text: 'Movies'),
-                    Tab(text: 'Shows'),
-                  ],
-                )
-              ],
-            ),
-            actions: <Widget>[
-              IconButton(icon: Icon(Icons.search),onPressed: () {}),
-              IconButton(icon: Icon(Icons.settings),onPressed: () {}),
-            ],
-          ),
-          body: Center(
-            child: TabBarView(
-              children: <Widget>[
-                HomeTab(),
-                MoviesTab(),
-                ShowsTab(),
-              ],
-            ),
-          ),
-        ),
     );
   }
 }

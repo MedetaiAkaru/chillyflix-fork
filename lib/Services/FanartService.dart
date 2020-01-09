@@ -1,54 +1,46 @@
 import 'dart:convert';
 
-import 'package:chillyflix/TraktItem.dart';
 import 'package:http/http.dart' as http;
+
+import 'TraktService.dart';
 
 class FanartItem {
   String poster;
   String backDrop;
-  String logo;
-  FanartItem({this.poster, this.backDrop, this.logo});
+  String still;
+  FanartItem({this.poster, this.backDrop, this.still});
 }
 
-class Fanart {
+class FanartService {
   String fanartBaseUrl = 'http://webservice.fanart.tv/v3';
   String fanartApiKey = 'a24e36632e681ebb4b7763c606b0e2f7';
   String tmdbApiUrl = 'https://api.themoviedb.org/3';
   String tmdbApiKey = '7f278e56a85aa1aa3ead3db5cfffbc31';
   String tmdbImageUrl = 'https://image.tmdb.org/t/p/w500';
 
-  Future<FanartItem> getImages(TraktItem item) async {
-    FanartItem fanart = FanartItem(poster: '', backDrop: '');
+  Future<FanartItem> getImages(TraktModel item) async {
     
-    List<String> fanarts = [];
-    fanarts = await getImagesFromTmdb(_getTmdbEndpoint(item));
-    fanart.poster = fanarts[0];
-    fanart.backDrop = fanarts[1];
-    if(fanart.poster == '' || fanart.backDrop == '') {
-      print("fetching from fanart for ${item.title}");
-      // fanarts = await getImagesFromTmdb(tmdbEndpoint);
-      fanart.poster = await getImagesFromFanart(item.ids['imdb'], 'movies');
-    }
-    return fanart;
+      return await getImagesFromTmdb(_getTmdbEndpoint(item), true);
+    
   }
 
-  String _getTmdbEndpoint(TraktItem item) {
+  String _getTmdbEndpoint(TraktModel item) {
     switch(item.type) {
       case 'movie':
         return 'movie/${item.ids['tmdb'].toString()}';
       case 'show':
         return 'tv/${item.ids['tmdb'].toString()}';
       case 'season':
-        return 'tv/${item.ids['tmdb'].toString()}/season/1';
+        return 'tv/${item.showIds['tmdb'].toString()}/season/${item.number}';
       case 'episode':
-        return 'tv/${item.ids['tmdb'].toString()}/season/1/episode/1';
+        return 'tv/${item.showIds['tmdb'].toString()}/season/${item.seasonNumber}/episode/${item.number}';
     }
+    return '';
   }
 
 
   Future<String> getImagesFromFanart(String imdbId, String endpoint) async {
     String posterArray = endpoint == 'movies' ? 'movieposter' : 'tvposter';
-    print('${fanartBaseUrl}/${endpoint}/${imdbId}?api_key=${fanartApiKey}');
     var res = await http.get('${fanartBaseUrl}/${endpoint}/${imdbId}?api_key=${fanartApiKey}');
     if (res.statusCode == 200) {
       Map<String, dynamic> body = jsonDecode(res.body);
@@ -64,16 +56,22 @@ class Fanart {
   }
 
 
-  Future<List<String>> getImagesFromTmdb(String endpoint) async {
+  Future<FanartItem> getImagesFromTmdb(String endpoint, bool isEpisode) async {
     var res = await http.get('${tmdbApiUrl}/${endpoint}?api_key=${tmdbApiKey}');
+    FanartItem fa = FanartItem(poster: null, backDrop: null, still: null);
     if (res.statusCode == 200) {
       Map<String, dynamic> body = jsonDecode(res.body);
-      return [tmdbImageUrl + body['poster_path'], tmdbImageUrl + body['backdrop_path']];
-      // return tmdbImageUrl + body[type][0]['file_path'];
-      
-    } else {
-      return ['', ''];
+      if(body['still_path'] != null) {
+        fa.still = tmdbImageUrl + body['still_path'];
+      }
+      if(body['poster_path'] != null) {
+        fa.poster = tmdbImageUrl + body['poster_path'];
+      }
+      if(body['backdrop_path'] != null) {
+        fa.backDrop = (tmdbImageUrl + body['backdrop_path']).replaceAll('w500', 'original');
+      }
     }
+    return fa;
   }
 
   

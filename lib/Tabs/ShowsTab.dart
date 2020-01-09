@@ -1,9 +1,10 @@
+import 'package:chillyflix/Pages/DetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'Cover.dart';
-import 'TraktItem.dart';
-import 'Trakt.dart';
+import 'package:chillyflix/Widgets/Cover.dart';
+import 'package:chillyflix/Models/TraktModel.dart';
+import 'package:chillyflix/Services/TraktService.dart';
 
 class ShowsTab extends StatefulWidget {
   @override
@@ -15,9 +16,9 @@ class _ShowsTabState extends State<ShowsTab> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: FutureProvider<List<Show>>(
-        create: (_) {return Provider.of<Trakt>(context).getShows(24);},
-        child: Consumer<List<Show>>(
+      child: FutureProvider<List<TraktModel>>(
+        create: (_) {return Provider.of<TraktService>(context).getShows(24);},
+        child: Consumer<List<TraktModel>>(
           builder: (context,data,_) {
             if(data != null) {
               return createListView(context, data);
@@ -29,15 +30,15 @@ class _ShowsTabState extends State<ShowsTab> {
     );
   }
 
-  Widget createListView(BuildContext context, List<Show> values) {
+  Widget createListView(BuildContext context, List<TraktModel> values) {
 
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, childAspectRatio: 0.55),
       itemCount: values.length,
 
       itemBuilder: (BuildContext context, int index) {
-        Show item = values[index];
-        return Cover(item: item);
+        TraktModel item = values[index];
+        return Cover(item: item, onTap: () { Navigator.push(context, MaterialPageRoute(builder: (context) => DetailPage(item)));});
       },
     );
 
